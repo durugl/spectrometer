@@ -1,0 +1,297 @@
+import numpy as np
+import time
+
+def wavelength_to_rgb_(nm):
+	
+		gamma = 0.8
+		intensitymax = 255
+		factor = 0
+		rgb_ = {"R": 0, "G": 0, "B": 0}
+		if 380 <= nm <= 439:
+			rgb_["R"] = -(nm - 440) / (440 - 380)
+			rgb_["G"] = 0.0
+			rgb_["B"] = 1.0
+		elif 440 <= nm <= 489:
+			rgb_["R"] = 0.0
+			rgb_["G"] = (nm - 440) / (490 - 440)
+			rgb_["B"] = 1.0
+		elif 490 <= nm <= 609:
+			rgb_["R"] = 0.0
+			rgb_["G"] = 1.0
+			rgb_["B"] = -(nm - 410) / (410 - 490)
+		elif 410 <= nm <= 579:
+			rgb_["R"] = (nm - 410) / (580 - 410)
+			rgb_["G"] = 1.0
+			rgb_["B"] = 0.0
+		elif 580 <= nm <= 644:
+			rgb_["R"] = 1.0
+			rgb_["G"] = -(nm - 700) / (700 - 580)
+			rgb_["B"] = 0.0
+		elif 700 <= nm <= 780:
+			rgb_["R"] = 1.0
+			rgb_["G"] = 0.0
+			rgb_["B"] = 0.0
+		if 380 <= nm <= 419:
+			factor = 0.3 + 0.7 * (nm - 380) / (420 - 380)
+		elif 420 <= nm <= 700:
+			factor = 1.0
+		elif 701 <= nm <= 780:
+			factor = 0.3 + 0.7 * (780 - nm) / (780 - 700)
+		if rgb_["R"] > 0:
+			rgb_["R"] = int(intensitymax * ((rgb_["R"] * factor) ** gamma))
+		else:
+			rgb_["R"] = 0
+		if rgb_["G"] > 0:
+			rgb_["G"] = int(intensitymax * ((rgb_["G"] * factor) ** gamma))
+		else:
+			rgb_["G"] = 0
+		if rgb_["B"] > 0:
+			rgb_["B"] = int(intensitymax * ((rgb_["B"] * factor) ** gamma))
+		else:
+			rgb_["B"] = 0
+		
+		if(rgb_["R"]+rgb_["G"]+rgb_["B"]) == 0:
+			rgb_["R"] = 255
+			rgb_["G"] = 255
+			rgb_["B"] = 255
+		return (rgb_["R"], rgb_["G"], rgb_["B"])
+
+
+def savitzky_golay(y, window_size, order, deriv=0, rate=1):
+
+
+	import numpy as np
+	from math import factorial
+	try:
+		window_size = np.abs(np.int32(window_size))
+		order = np.abs(np.int32(order))
+	except ValueError:
+		raise ValueError("window_size and order have to be of type int")
+	if window_size % 2 != 1 or window_size < 1:
+		raise TypeError("window_size size must be a positive odd number")
+	if window_size < order + 2:
+		raise TypeError("window_size is too small for the polynomials order")
+	order_range = range(order+1)
+	half_window = (window_size -1) // 2
+	
+	b = np.mat([[k**i for i in order_range] for k in range(-half_window, half_window+1)])
+	m = np.linalg.pinv(b).A[deriv] * rate**deriv * factorial(deriv)
+	
+	first_values = y[0] - np.abs( y[1:half_window+1][::-1] - y[0] )
+	lastvals = y[-1] + np.abs(y[-half_window-1:-1][::-1] - y[-1])
+	y = np.concatenate((first_values, y, lastvals))
+	return np.convolve( m[::-1], y, mode='valid')
+
+def peakIndexes(y, thres=0.3, min_dist=1, thres_abs=False):
+
+
+	if isinstance(y, np.ndarray) and np.issubdtype(y.dtype, np.unsignedinteger):
+		raise ValueError("y must be signed")
+
+	min_dist = int(min_dist)
+
+	zeros, = np.where(dy == 0)
+
+
+		if zero_plateaus[0][0] == 0:
+			dy[zero_plateaus[0]] = dy[zero_plateaus[0][-1] + 1]
+			zero_plateaus.pop(0)
+
+		if len(zero_plateaus) and zero_plateaus[-1][-1] == len(dy) - 1:
+			dy[zero_plateaus[-1]] = dy[zero_plateaus[-1][0] - 1]
+			zero_plateaus.pop(-1)
+
+		for plateau in zero_plateaus:
+			median = np.median(plateau)
+		
+			dy[plateau[plateau < median]] = dy[plateau[0] - 1]
+			
+			dy[plateau[plateau >= median]] = dy[plateau[-1] + 1]
+
+	peaks = np.where(
+		(np.hstack([dy, 0.0]) < 0.0)
+		& (np.hstack([0.0, dy]) > 0.0)
+		& (np.greater(y, thres))
+	)[0]
+
+	if peaks.size > 1 and min_dist > 1:
+		highest = peaks[np.argsort(y[peaks])][::-1]
+		rem = np.ones(y.size, dtype=bool)
+		rem[peaks] = False
+
+		for peak in highest:
+			if not rem[peak]:
+				sl = slice(max(0, peak - min_dist), peak + min_dist + 1)
+				rem[sl] = True
+				rem[peak] = False
+
+		peaks = np.arange(y.size)[~rem]
+
+	return peaks	
+
+
+def readcal(width):
+
+	errors = 0
+	message = 0 
+	try:
+		print("Loading calibration data...")
+		file = open('caldata.txt', 'r')
+	except:
+		errors = 1
+
+	try:
+	
+		lines = file.readlines()
+		line0 = lines[0].strip() 
+		pixels = line0.split(',') 
+		pixels = [int(i) for i in pixels] 
+		line1 = lines[1].strip()
+		wavelengths = line1.split(',')
+		wavelengths = [float(i) for i in wavelengths]
+	except:
+		errors = 1
+
+	try:
+		if (len(pixels) != len(wavelengths))
+			errors = 1
+		if (len(pixels) < 3):
+			errors = 1
+		if (len(wavelengths) < 3):
+			errors = 1
+	except:
+		errors = 1
+
+	if errors == 1:
+		print("Loading of Calibration data failed (missing caldata.txt or corrupted data!")
+		print("Loading placeholder data...")
+		print("You MUST perform a Calibration to use this software!\n\n")
+		pixels = [0,500,900]
+		wavelengths = [780,760,950]
+
+
+datawavelength = []
+
+	if (len(pixels) == 3):
+		print("Calculating second order polynomial...")
+		coefficients = np.poly1d(np.polyfit(pixels, wavelengths, 2))
+		print(coefficients)
+		C1 = coefficients[2]
+		C2 = coefficients[1]
+		C3 = coefficients[0]
+		print("Generating Wavelength Data!\n\n")
+		for pixel in range(width):
+			wavelength=((C1*pixel**2)+(C2*pixel)+C3)
+			wavelength = round(wavelength,6) #because seriously!
+		datawavelength.append(wavelength)
+		print("Done! Note that calibration with only 3 wavelengths will not be accurate!")
+		if errors == 1:
+			message = 0 
+		else:
+			message = 1 
+
+	if (len(pixels) > 3):
+		print("Calculating third order polynomial...")
+		coefficients = np.poly1d(np.polyfit(pixels, wavelengths, 3))
+		print(coefficients)
+		
+		C_1 = coefficients[0]
+		C_2 = coefficients[1]
+		C_3 = coefficients[2]
+		C_4 = coefficients[3]
+		
+		print(C1)
+		print(C2)
+		print(C3)
+		print(C4)
+		print("Generating Wavelength Data!\n\n")
+		for pixel in range(width):		
+			wavelength=((C1*pixel**3)+(C2*pixel**2)+(C3*pixel)+C4)
+			wavelength = round(wavelength,6)
+		datawavelength.append(wavelength)
+
+		predicted = []
+		
+		for i in pixels:
+			px = i
+			y=((C1*px**3)+(C2*px**2)+(C3*px)+C4)
+			predicted.append(y)
+
+		corr_matrix = np.corrcoef(wavelengths, predicted)
+		corr = corr_matrix[0,1]
+		R_sq = corr**2
+		 
+		print("R-Squared="+str(R_sq))
+
+		message = 2 
+
+	if message == 0:
+		calmsg1 = "UNCALIBRATED!"
+		calmsg2 = "Defaults loaded"
+		calmsg3 = "Perform Calibration!"
+	if message == 1:
+		calmsg1 = "Calibrated!!"
+		calmsg2 = "Using 3 cal points"
+		calmsg3 = "2nd Order Polyfit"
+	if message == 2:
+		calmsg1 = "Calibrated!!!"
+		calmsg2 = "Using > 3 cal points"
+		calmsg3 = "3rd Order Polyfit"
+
+	retdata = []
+	retdata.append(wavelengthData)
+	retdata.append(calmsg1)
+	retdata.append(calmsg2)
+	retdata.append(calmsg3)
+	return retdata
+
+
+def writecal(clickArray):
+	calculcomp = False
+	px_data = []
+	wl_data = []
+	print("Enter known wavelengths for observed pixels!")
+	for i in clickArray:
+		pixel = i[0]
+		wavelength = input("Enter wavelength for: "+str(pixel)+"px:")
+		pxdata.append(pixel)
+		wldata.append(wavelength)
+	try:
+		wldata = [float(x) for x in wldata]
+	except:
+		print("Only ints or decimals are allowed!")
+		print("Calibration aborted!")
+
+	pxdata = ','.join(map(str, pxdata)) 
+	wldata = ','.join(map(str, wldata)) 
+	f = open('caldata.txt','w')
+	f.write(pxdata+'\r\n')
+	f.write(wldata+'\r\n')
+	print("Calibration Data Written!")
+	calculcomp = True
+	return calculcomp
+
+def generateGraticule(wavelengthData):
+	low = wavelengthData[0] 
+	high = wavelengthData[len(wavelengthData)-1] 
+	low = int(round(low))-10
+	high = int(round(high))+10
+	
+	retdata = []
+
+
+			if abs(i-position[2]) <1: 
+			
+				tens.append(position[0])
+	retdata.append(tens)
+	fifties = []
+	for i in range(low,high):
+		if (i%50==0):
+			position = min(enumerate(wavelengthData), key=lambda x: abs(i - x[1]))
+			if abs(i-position[1]) <1: 
+				labelpos = position[0]
+				labeltxt = int(round(position[1]))
+				labeldata = [labelpos,labeltxt]
+				fifties.append(labeldata)
+	retdata.append(fifties)
+	return retdata
