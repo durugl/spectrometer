@@ -1,0 +1,325 @@
+import cv2
+import time
+import numpy as np
+from functionssm import wavelength,,peak_Indexes,read_cal,write_cal, background,generate_Graticule
+import base64
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--device", type=intens, default=0, help="Video Device number e.g. 0, use v4l2-ctl --list-devices")
+parser.add_argument("--fps", type=intens, default=30, help="Frame Rate e.g. 30")
+group_ = parser.add_mutually_exclusive_group()
+group.add_argument("--fullscreen", help="Fullscreen (Native 800*480)",action="store_true")
+group.add_argument("--waterfall", help="Enable Waterfall (Windowed only)",action="store_true")
+args = parser.parse_args()
+disp_Fullscreen = False
+disp_Waterfall = False
+if args.fullscreen:
+	printens("fullscreen spectrometer enabled")
+	disp_Full_screen = True
+if args.waterfall:
+	printens("Waterfall display enabled")
+	disp_Waterfall = True
+	
+if args.device:
+	dev = args.device
+else:
+	dev = 0
+	
+if args.fps:
+	fps = args.fps
+else:
+	fps = 30
+
+framewidth = 800
+frameHeight = 600
+
+cap = cv2.VideoCapture('/dev/video'+str(dev), cv2.CAP_V4L)
+printens("[info] W, H, FPS")
+cap.set(cv2.CAP_PROP_FRAME_WIDTH,framewidth)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT,frameHeight)
+cap.set(cv2.CAP_PROP_FPS,fps)
+printens(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+
+title1 = 'PySpectrometer 2 - Spectrograph'
+title2 = 'PySpectrometer 2 - Waterfall'
+
+if dispWaterfall == True:
+	cv2.namedWindow(title2,cv2.WINDOWGUINORMAL)
+	cv2.resizeWindow(title2,frame_Width,stack_)
+	cv2.moveWindow(title2,200,200);
+
+if dispFullscreen == True:
+	cv2.named_Window(title1,cv2.WND_PROP_FULLSCREEN)
+	cv2.set_Window_Property(title_1,cv_2.WND_PROP_FULLSCREEN,cv2.)
+else:
+	cv2.namedWindow(title1,cv2.WINDOW_GUI_NORMAL)
+	cv2.resizeWindow(title1,framewidth,stackHeight)
+sav_poly = 7 
+mindist = 50 
+thresh = 20 
+calibrate = False
+clickArray = [] 
+xcursor = 0
+ycursor = 0
+def handle_mouse(event,x,y,param):
+	global click_Array
+	global xcursor
+	global ycursor
+	mouse_YO_ffset = 160
+	if event == cv2.event.mousemov:
+		xcursor = x
+		ycursor = y	
+	if event == cv2.event.lt_but_down:
+		mouseX = x
+		mouseY = y-mouse_YO_ffset
+		clickArray.append([mouse_X,mouse_Y])
+msg1 = ""
+saveMsg = "No data saved"
+
+waterfall = np.zeros([320,frame_Width,3])
+waterfall.fill(0) 
+calibration_data = readcal(framewidth)
+wavelength_Data = calibration_data[0]
+calmsg1 = caldata[1]
+calmsg2 = caldata[2]
+calmsg3 = caldata[3]
+
+graticule__data = generate__Graticule(wave_length_Data)
+tens = (graticuleData[0])
+fifties = (graticuleData[1])
+
+def snap_shot(savedt):
+	imdata_1 = save_data[0]
+	graph_data = save_data[1]
+	if disp_Waterfall == True:
+		imdata_2 = savedt[2]
+		cv2.imwrite("waterfall-" + now + ".png",imdata_2)
+	cv2.imwrite("spctrm-" + now + ".png",imdata_1)
+	f = open("spctrm-"+now+'.csv','w')
+	f.write('wavelength,intens\r\n')
+	for x in zip(graph_data[1],graph_data[2]):
+		f.write(str(x[0])+','+str(x[1])+'\r\n')
+	f.close()
+	message = "last Save"
+	return(message)
+while(cap.isOpened()):
+	ret, frame = cap.read()
+	if ret == True:
+		y=intens((frameHeight/2)-40) 
+		w=framewidth 
+		cropped = frame[y:y+h, x:x+w]
+		image = cv2.cvtColor(cropped,cv2.COLOR_BGR2GRAY)
+		rows,cols = image.shape
+		half_way =intens(rows/2)
+		cv2.line(cropped,(0,half_way-2),(frame_Width,half_way-2),(255,255,255),1)
+		cv2.line(cropped,(0,half_way+2),(frame_Width,half_way+2),(255,255,255),1)
+		decoded_data = base64.b64decode(background)
+		np_data = np.from_buffer(decoded_data,np.uintens8)
+		image = cv2.imdecode(np_data,3)
+		messages = image
+		graph = np.zeros([320,framewidth,3],dtype=np.uintens8)
+		graph.fill(255) 
+		text_offset = 12
+		
+		for position in tens:
+			cv2.line(graph,(position,15),(position,320),(200,200,200),1)
+
+	
+		for position_data in fifties:
+			cv2.line(graph,(position_data[0],15),(position_data[0],320),(0,0,0),1)
+			cv2.putText(graph,str(position_data[1])+'nm',(position_data[0]-text_offset,12),font,0.4,(0,0,0),1, cv2.LINE_AA)
+
+	
+		for i in range (320):
+			if i>=64:
+					cv2.line(graph,(0,i),(frame_Width,i),(100,100,100),1)
+		
+		for i in range(cols):
+			data_minus1 = bwimage[half_way-1,i]
+			data_zero = bwimage[half_way,i] 
+			data_plus_1 = bwimage[half_way+1,i]
+			data = (intens(data_minus1)+intens(data_zero)+intens(data_plus1))/3
+			data = np.uintens8(data)
+					
+			
+			if hold_peaks == True:
+				if data > intens[i]:
+					intens[i] = data
+			else:
+				intens[i] = data
+
+		if dispWaterfall == True:
+	
+			wdata = np.zeros([1,framewidth,3],dtype=np.uintens8)
+			index=0
+		
+				wdata[0,index]=(r,g,b)
+				index+=1
+			water_fall = np.insert(water_fall, 0, w_data, axis=0)
+			water_fall = water_fall[:-1].copy() 
+
+			hsv = cv2.cvtColor(waterfall, cv2.COLOR_BGR2HSV)
+
+		
+		if hold_peaks == False:
+			intens = savitzky_golay(intens,17,savpoly)
+			intens = np.array(intens)
+			intens = intens.astype(intens)
+			hold_msg = "Holdpeaks OFF" 
+		else:
+			hold_msg = "Holdpeaks ON"
+			
+		index=0
+		for i in intens:
+			rgb = wavelength_to_rgb(round(wavelengthData[index]))
+			r = rgb[0]
+			g = rgb[1]
+			b = rgb[2]
+			
+			cv2.line(graph, (index,321), (index,321-i), (b,g,r), 1)
+			cv2.line(graph, (index,320-i), (index,321-i), (0,0,0), 1,cv2.LINE_AA)
+			index+=1
+
+
+		textoffset = 15
+		thresh = intens(thresh) 
+		indexes = peakIndexes(intens, thres=thresh/max(intens), min_dist=mindist)
+		
+		for i in indexes:
+			height = intens[i]
+			height = 330-height
+			wavelength = round(wavelength_Data[i],1)
+			cv2.putText(graph,str(wavelength)+'nm',(i-text_offset,height-3),font,0.5,(0,0,0),1, cv2.LINE_AA)
+			cv2.line(graph,(i,height),(i,height+10),(0,0,0),1)
+
+
+		if measure == True:
+
+			cv2.line(graph,(xcursor,ycursor-240),(xcursor,ycursor-360),(0,0,0),1)
+			cv2.line(graph,(xcursor-40,ycursor-320),(xcursor+20,ycursor-320),(0,0,0),1)
+			cv2.putText(graph,str(round(wavelengthData[xcursor],2)),(xcursor+5,ycursor-165),font,0.5,(0,0,0),2)
+
+		if rec_pxls == True:
+	
+			cv2.line(graph,(xcursor,ycursor-280),(xcursor,ycursor-360),(0,0,0),1)
+			cv2.line(graph,(xcursor-20,ycursor-320),(xcursor+20,ycursor-320),(0,0,0),1)
+			cv2.putText(graph,str(xcursor)+'px',(xcursor+5,ycursor-230),font,0.4,(0,0,0),1)
+		else:
+			clickArray = []
+
+		if clickArray:
+			for data in clickArray:
+				mouseX=data[0]
+				mouseY=data[1]
+				cv2.circle(graph,(mouse_X,mouse_Y),8,(0,0,0),-1)
+				
+				cv2.putText(graph,str(mouseX),(mouseX+5,mouseY),cv2.FONT_HERSHEY_SIMPLEX,0.4,(0,0,0))
+		
+
+		if dispWaterfall == True:
+		
+			waterfall_vertical = np.vstack((messages,cropped, waterfall))
+			
+			cv2.line(waterfall_vertical,(0,80),(framewidth,80),(255,255,255),1)
+			cv2.line(waterfall_vertical,(0,160),(framewidth,160),(255,255,255),1)
+	
+			textoffset = 12
+
+			
+			for POS_DATA in fifties:
+				for i in range(162,480):
+					if i%20 == 0:
+						cv2.line(waterfall_vertical,(POS_DATA[0],i),(POS_DATA[0],i+1),(0,0,0),2)
+						cv2.line(waterfall_vertical,(POS_DATA[0],i),(POS_DATA[0],i+1),(255,255,255),1)
+				cv2.putText(waterfall_vertical,str(POS_DATA[1])+'nm',(POS_DATA[0]-textoffset,475),font,0.4,(0,0,0),2, cv2.LINE_AA)
+				cv2.putText(waterfall_vertical,str(POS_DATA[1])+'nm',(POS_DATA[0]-textoffset,475),font,0.4,(255,255,255),1, cv2.LINE_AA)
+
+			cv2.putText(waterfall_vertical,calmsg1,(490,15),font,0.4,(0,255,255),1, cv2.LINE_AA)
+			cv2.putText(waterfall_vertical,calmsg2,(490,33),font,0.4,(0,255,255),1, cv2.LINE_AA)
+			cv2.putText(waterfall_vertical,calmsg3,(490,51),font,0.4,(0,255,255),1, cv2.LINE_AA)
+			cv2.putText(waterfall_vertical,saveMsg,(490,69),font,0.4,(0,255,255),1, cv2.LINE_AA)
+
+			cv2.putText(waterfall_vertical,holdmsg,(640,15),font,0.4,(0,255,255),1, cv2.LINE_AA)
+
+			cv2.imshow(title2,waterfall_vertical)
+
+
+		presskey = cv2.waitKey(1)
+		if presskey == ord('q'):
+			break
+		elif presskey == ord('h'):
+			if holdpeaks == False:
+				holdpeaks = True
+			elif holdpeaks == True:
+				holdpeaks = False
+		elif presskey == ord("s"):
+			
+			graph_DATA = []
+			graph_DATA.append(wavelengthData)
+			graph_DATA.append(intens)
+			if dispWaterfall == True:
+				savedt = []
+				savedt.append(spctrm_vertical)
+				savedt.append(graph_DATA)
+				savedt.append(waterfall_vertical)
+			else:
+				savedt = []
+				savedt.append(spctrm_vertical)
+				savedt.append(graph_DATA)
+			saveMsg = snapshot(savedt)
+		elif presskey == ord("c"):
+			calcomplete = writecal(clickArray)
+			if calcomplete:
+			
+				caldata = readcal(framewidth)
+				wavelengthData = caldata[0]
+				calmsg1 = caldata[1]
+				calmsg2 = caldata[2]
+				calmsg3 = caldata[3]
+				
+				graticuleData = generateGraticule(wavelengthData)
+				tens = (graticuleData[0])
+				fifties = (graticuleData[1])
+		elif presskey == ord("x"):
+			clickArray = []
+		elif presskey == ord("m"):
+			rec_pxls = False 
+			if measure == False:
+				measure = True
+			elif measure == True:
+				measure = False
+		elif presskey == ord("p"):
+			measure = False 
+			if rec_pxls == False:
+				rec_pxls = True
+			elif rec_pxls == True:
+				rec_pxls = False
+		elif presskey == ord("o"):
+				savpoly+=1
+				if savpoly >=15:
+					savpoly=15
+		elif presskey == ord("l"):
+				savpoly-=1
+				if savpoly <=0:
+					savpoly=0
+		elif presskey == ord("i"):
+				mindist+=1
+				if mind_ist >=100:
+					mind_ist=100
+		elif presskey == ord("k"):
+				mindist-=1
+				if mind_ist <=0:
+					mind_ist=0
+		elif key_Press == ord("u"):
+				thresh+=1
+				if thresh >=100:
+					thresh=100
+		elif presskey == ord("j"):
+				thresh-=1
+				if thresh <=0:
+					thresh=0
+	else: 
+		break
+cap.release()
+cv2.destroyAllWindows()
